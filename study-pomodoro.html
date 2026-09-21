@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Pomodoro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap');
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+  }
+
+  body {
+    font-family: "DM Sans", sans-serif;
+    color: #f5fff8;
+  }
+
+  .overlay {
+    width: 100vw;
+    height: 100vh;
+    min-width: 500px;
+    min-height: 280px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card {
+    width: min(760px, 92vw);
+    padding: 30px 34px 26px;
+    border: 1px solid rgba(213, 255, 226, .35);
+    border-radius: 28px;
+    background:
+      linear-gradient(145deg, rgba(21, 69, 48, .90), rgba(11, 43, 31, .84));
+    box-shadow:
+      0 20px 70px rgba(4, 30, 19, .30),
+      inset 0 1px 0 rgba(255,255,255,.12);
+    backdrop-filter: blur(12px);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    background: rgba(174, 236, 194, .08);
+    top: -110px;
+    left: -70px;
+  }
+
+  .card::after {
+    content: "";
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: rgba(174, 236, 194, .06);
+    bottom: -170px;
+    right: -80px;
+  }
+
+  .leaf {
+    position: absolute;
+    opacity: .75;
+    font-size: 28px;
+    z-index: 2;
+  }
+
+  .leaf.one { top: 18px; left: 24px; transform: rotate(-18deg); }
+  .leaf.two { top: 18px; right: 28px; transform: rotate(18deg); }
+  .leaf.three { bottom: 17px; left: 30px; transform: rotate(18deg); font-size: 23px; }
+  .leaf.four { bottom: 17px; right: 30px; transform: rotate(-18deg); font-size: 23px; }
+
+  .title {
+    position: relative;
+    z-index: 3;
+    font-family: "Playfair Display", serif;
+    font-size: clamp(27px, 4vw, 43px);
+    letter-spacing: .2px;
+    margin: 0 0 7px;
+  }
+
+  .subtitle {
+    position: relative;
+    z-index: 3;
+    margin: 0 0 24px;
+    color: #d6f2de;
+    font-size: clamp(13px, 1.8vw, 17px);
+    letter-spacing: .5px;
+  }
+
+  .timer-wrap {
+    position: relative;
+    z-index: 3;
+    width: 225px;
+    height: 225px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .track {
+    fill: none;
+    stroke: rgba(222, 255, 231, .14);
+    stroke-width: 7;
+  }
+
+  .progress {
+    fill: none;
+    stroke: #b9f4c9;
+    stroke-width: 7;
+    stroke-linecap: round;
+    transition: stroke-dashoffset .8s linear, stroke .3s ease;
+  }
+
+  .timer {
+    font-size: 58px;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: 2px;
+  }
+
+  .phase {
+    margin-top: 10px;
+    color: #d6f2de;
+    font-size: 14px;
+    letter-spacing: 2.2px;
+    text-transform: uppercase;
+  }
+
+  .dots {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 4px 0 18px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(215, 249, 224, .25);
+  }
+
+  .dot.active {
+    background: #b9f4c9;
+    box-shadow: 0 0 12px rgba(185,244,201,.6);
+  }
+
+  .hint {
+    position: relative;
+    z-index: 3;
+    margin: 0;
+    color: rgba(239, 255, 244, .78);
+    font-size: 13px;
+  }
+
+  .controls {
+    position: relative;
+    z-index: 5;
+    margin-top: 17px;
+    display: flex;
+    gap: 9px;
+    justify-content: center;
+  }
+
+  button {
+    border: 1px solid rgba(220,255,231,.22);
+    background: rgba(225,255,235,.10);
+    color: #f2fff5;
+    border-radius: 999px;
+    padding: 8px 15px;
+    font: 500 12px "DM Sans", sans-serif;
+    cursor: pointer;
+  }
+
+  button:hover { background: rgba(225,255,235,.18); }
+
+  .small {
+    opacity: .65;
+  }
+
+  @media (max-height: 600px) {
+    .card { padding: 20px 25px; }
+    .timer-wrap { width: 170px; height: 170px; margin-bottom: 12px; }
+    .timer { font-size: 45px; }
+    .title { font-size: 28px; }
+    .subtitle { margin-bottom: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="overlay">
+  <div class="card">
+    <div class="leaf one">🌿</div>
+    <div class="leaf two">🍃</div>
+    <div class="leaf three">🌱</div>
+    <div class="leaf four">🍃</div>
+
+    <h1 class="title">Study Pomodoro</h1>
+    <p class="subtitle">20 focus time · 10 relax + chat</p>
+
+    <div class="timer-wrap">
+      <svg viewBox="0 0 225 225" aria-hidden="true">
+        <circle class="track" cx="112.5" cy="112.5" r="100"></circle>
+        <circle id="progress" class="progress" cx="112.5" cy="112.5" r="100"></circle>
+      </svg>
+      <div>
+        <div id="timer" class="timer">20:00</div>
+        <div id="phase" class="phase">Focus time</div>
+      </div>
+    </div>
+
+    <div id="dots" class="dots"></div>
+    <p id="hint" class="hint">Stay focused · you've got this ✦</p>
+
+    <div class="controls">
+      <button id="start">Start</button>
+      <button id="pause">Pause</button>
+      <button id="reset">Reset</button>
+      <button id="skip" class="small">Skip</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const FOCUS = 20 * 60;
+  const BREAK = 10 * 60;
+  const CIRCUMFERENCE = 2 * Math.PI * 100;
+
+  let phase = "focus";
+  let remaining = FOCUS;
+  let running = false;
+  let interval = null;
+  let cycle = 1;
+
+  const timer = document.getElementById("timer");
+  const phaseEl = document.getElementById("phase");
+  const progress = document.getElementById("progress");
+  const hint = document.getElementById("hint");
+  const dots = document.getElementById("dots");
+
+  progress.style.strokeDasharray = CIRCUMFERENCE;
+  progress.style.strokeDashoffset = 0;
+
+  function formatTime(seconds) {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  }
+
+  function renderDots() {
+    dots.innerHTML = "";
+    for (let i = 0; i < Math.min(cycle, 8); i++) {
+      const dot = document.createElement("span");
+      dot.className = "dot" + (i === Math.min(cycle - 1, 7) ? " active" : "");
+      dots.appendChild(dot);
+    }
+  }
+
+  function render() {
+    const total = phase === "focus" ? FOCUS : BREAK;
+    const fraction = remaining / total;
+
+    timer.textContent = formatTime(remaining);
+    phaseEl.textContent = phase === "focus" ? "Focus time" : "Relax + chat";
+    progress.style.strokeDashoffset = CIRCUMFERENCE * (1 - fraction);
+    progress.style.stroke = phase === "focus" ? "#b9f4c9" : "#d8f7df";
+
+    hint.textContent = phase === "focus"
+      ? "Stay focused · you've got this ✦"
+      : "Take a break · relax + chat ✿";
+
+    renderDots();
+
+    document.title = `${formatTime(remaining)} · ${phase === "focus" ? "Focus" : "Relax + Chat"}`;
+  }
+
+  function switchPhase() {
+    phase = phase === "focus" ? "break" : "focus";
+    if (phase === "focus") cycle++;
+    remaining = phase === "focus" ? FOCUS : BREAK;
+    render();
+  }
+
+  function tick() {
+    if (remaining > 0) {
+      remaining--;
+      render();
+    } else {
+      switchPhase();
+    }
+  }
+
+  document.getElementById("start").onclick = () => {
+    if (running) return;
+    running = true;
+    interval = setInterval(tick, 1000);
+  };
+
+  document.getElementById("pause").onclick = () => {
+    running = false;
+    clearInterval(interval);
+    interval = null;
+  };
+
+  document.getElementById("reset").onclick = () => {
+    running = false;
+    clearInterval(interval);
+    interval = null;
+    phase = "focus";
+    remaining = FOCUS;
+    cycle = 1;
+    render();
+  };
+
+  document.getElementById("skip").onclick = () => {
+    switchPhase();
+  };
+
+  // Starts automatically so it works immediately as a TikTok/OBS browser source.
+  render();
+  running = true;
+  interval = setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
